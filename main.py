@@ -1,8 +1,10 @@
+import os
+
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 from deep_translator import GoogleTranslator
 
-TOKEN = "8562368370:AAFlbBz7s_zVpSqc_zcm-4sXqDdeizfMfak"
+TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 
 translator = GoogleTranslator(source="auto", target="de")
 
