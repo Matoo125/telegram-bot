@@ -1,0 +1,5 @@
+[mounts]
+    source = "data"
+    destination = "/data"
+[env]
+    DATA_DIR = "/data"

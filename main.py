@@ -19,7 +19,7 @@ MISTRAL_API_KEY = os.environ["MISTRAL_API_KEY"]
 translator = GoogleTranslator(source="auto", target="de")
 mistral = Mistral(api_key=MISTRAL_API_KEY)
 
-HISTORY_FILE = Path(__file__).parent / "history.json"
+HISTORY_FILE = Path(os.environ.get("DATA_DIR", Path(__file__).parent)) / "history.json"
 
 
 def load_history() -> list[tuple[str, str]]:
