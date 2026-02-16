@@ -1,4 +1,6 @@
+import json
 import os
+from pathlib import Path
 
 import re
 
@@ -16,6 +18,21 @@ MISTRAL_API_KEY = os.environ["MISTRAL_API_KEY"]
 
 translator = GoogleTranslator(source="auto", target="de")
 mistral = Mistral(api_key=MISTRAL_API_KEY)
+
+HISTORY_FILE = Path(__file__).parent / "history.json"
+
+
+def load_history() -> list[tuple[str, str]]:
+    if HISTORY_FILE.exists():
+        return [tuple(pair) for pair in json.loads(HISTORY_FILE.read_text())]
+    return []
+
+
+def save_history() -> None:
+    HISTORY_FILE.write_text(json.dumps(translation_history))
+
+
+translation_history: list[tuple[str, str]] = load_history()
 
 MODES = {"translate", "llm"}
 DEFAULT_MODE = "translate"
@@ -45,7 +62,8 @@ def md_to_telegram_html(text: str) -> str:
 async def process_message(mode: str, text: str, context: ContextTypes.DEFAULT_TYPE) -> str:
     if mode == "translate":
         result = translator.translate(text)
-        context.chat_data.setdefault("history", []).append((text, result))
+        translation_history.append((text, result))
+        save_history()
     else:
         messages = context.chat_data.setdefault("llm_messages", [])
         messages.append({"role": "user", "content": text})
@@ -110,19 +128,18 @@ async def mode_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 async def review(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    history = context.chat_data.get("history", [])
-    if not history:
+    if not translation_history:
         await update.message.reply_text("No translations yet.")
         return
 
     original_header = "Original"
     translated_header = "German"
-    col1 = max(len(original_header), *(len(orig) for orig, _ in history))
-    col2 = max(len(translated_header), *(len(trans) for _, trans in history))
+    col1 = max(len(original_header), *(len(orig) for orig, _ in translation_history))
+    col2 = max(len(translated_header), *(len(trans) for _, trans in translation_history))
 
     sep = f"+-{'-' * col1}-+-{'-' * col2}-+"
     header = f"| {original_header:<{col1}} | {translated_header:<{col2}} |"
-    rows = [f"| {orig:<{col1}} | {trans:<{col2}} |" for orig, trans in history]
+    rows = [f"| {orig:<{col1}} | {trans:<{col2}} |" for orig, trans in translation_history]
 
     table = "\n".join([sep, header, sep, *rows, sep])
     await update.message.reply_text(f"<pre>{table}</pre>", parse_mode="HTML")
