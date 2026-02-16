@@ -7,4 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "python-telegram-bot>=22.6",
     "deep-translator>=1.11",
+    "mistralai>=1.0",
+    "dotenv>=0.9.9",
+    "markdown>=3.6",
 ]
